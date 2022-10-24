@@ -5,40 +5,38 @@ from spinup.exercises.pytorch.problem_set_1 import exercise1_1
 from spinup.exercises.pytorch.problem_set_1 import exercise1_2_auxiliary
 
 """
-
 Exercise 1.2: PPO Gaussian Policy
-
 You will implement an MLP diagonal Gaussian policy for PPO by
 writing an MLP-builder, and a few other key functions.
-
 Log-likelihoods will be computed using your answer to Exercise 1.1,
 so make sure to complete that exercise before beginning this one.
-
 """
 
 def mlp(sizes, activation, output_activation=nn.Identity):
     """
     Build a multi-layer perceptron in PyTorch.
-
     Args:
         sizes: Tuple, list, or other iterable giving the number of units
             for each layer of the MLP. 
-
         activation: Activation function for all layers except last.
-
         output_activation: Activation function for last layer.
-
     Returns:
         A PyTorch module that can be called to give the output of the MLP.
         (Use an nn.Sequential module.)
-
     """
-    #######################
-    #                     #
-    #   YOUR CODE HERE    #
-    #                     #
-    #######################
-    pass
+
+    # 
+
+    model = nn.Sequential()
+
+    for layer_num in range(len(sizes)):
+        if layer_num + 1 >= len(sizes):
+            model.add_module(output_activation)
+        else:
+            model.append(nn.Linear(sizes[layer_num],sizes[layer_num+1]))
+            model.append(activation)
+
+    return model 
 
 class DiagonalGaussianDistribution:
 
@@ -57,7 +55,13 @@ class DiagonalGaussianDistribution:
         #   YOUR CODE HERE    #
         #                     #
         #######################
-        pass
+        std = torch.exp(self.log_std)
+
+        z = torch.normal(self.mu,std)
+
+        sample_value = self.mu + std * z 
+
+        return sample_value
 
     #================================(Given, ignore)==========================================#
     def log_prob(self, value):
@@ -75,7 +79,6 @@ class MLPGaussianActor(nn.Module):
         """
         Initialize an MLP Gaussian Actor by making a PyTorch module for computing the
         mean of the distribution given a batch of observations, and a log_std parameter.
-
         Make log_std a PyTorch Parameter with the same shape as the action vector, 
         independent of observations, initialized to [-0.5, -0.5, ..., -0.5].
         (Make sure it's trainable!)
@@ -86,8 +89,10 @@ class MLPGaussianActor(nn.Module):
         #                     #
         #######################
         # self.log_std = 
-        # self.mu_net = 
-        pass 
+
+        sizes = [obs_dim,*hidden_sizes,act_dim]
+        self.mu_net = mlp(sizes,activation) 
+        self.log_std = torch.tensor([-0.5] * act_dim)
 
     #================================(Given, ignore)==========================================#
     def forward(self, obs, act=None):

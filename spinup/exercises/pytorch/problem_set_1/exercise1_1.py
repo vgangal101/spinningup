@@ -22,9 +22,18 @@ def gaussian_likelihood(x, mu, log_std):
     """
 
 
-    k = x.shape[1]
+
+    if len(x.numpy().shape) == 2:
+        k = x.shape[1]
+        sum_d = 1
+    else: 
+        k = 1
+        sum_d = 0
+    
+
+    
     std = torch.exp(log_std)
-    val = -0.5 * (torch.sum(((x-mu)**2/std**2 + (2 * log_std)),1) + k*torch.log(torch.tensor([2*torch.pi])))
+    val = -0.5 * (torch.sum(((x-mu)**2/std**2 + (2 * log_std)),sum_d) + k*torch.log(torch.tensor([2*torch.pi])))
 
     return val
 

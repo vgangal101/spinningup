@@ -25,6 +25,8 @@ def mlp(sizes, activation, output_activation=nn.Identity):
         (Use an nn.Sequential module.)
     """
 
+    # YOUR CODE HERE 
+
     layers = []
     #inbetween_act = nn.Tanh()
     #final_act = nn.Identity()

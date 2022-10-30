@@ -47,3 +47,36 @@ class MLPGaussianActor(nn.Module):
         if act is not None:
             logp_a = pi.log_prob(act)
         return pi, logp_a
+
+
+if __name__ == '__main__':
+    """
+    Run this file to verify your solution.
+    """
+    from spinup.exercises.pytorch.problem_set_1 import exercise1_2_auxiliary
+    from spinup import ppo_pytorch as ppo
+    from spinup.exercises.common import print_result
+    from functools import partial
+    import gym
+    import os
+    import pandas as pd
+    import psutil
+    import time
+
+    logdir = "/tmp/experiments/%i"%int(time.time())
+
+    ActorCritic = partial(exercise1_2_auxiliary.ExerciseActorCritic, actor=MLPGaussianActor)
+    
+    ppo(env_fn = lambda : gym.make('InvertedPendulum-v2'),
+        actor_critic=ActorCritic,
+        ac_kwargs=dict(hidden_sizes=(64,)),
+        steps_per_epoch=4000, epochs=20, logger_kwargs=dict(output_dir=logdir))
+
+    # Get scores from last five epochs to evaluate success.
+    data = pd.read_table(os.path.join(logdir,'progress.txt'))
+    last_scores = data['AverageEpRet'][-5:]
+
+    # Your implementation is probably correct if the agent has a score >500,
+    # or if it reaches the top possible score of 1000, in the last five epochs.
+    correct = np.mean(last_scores) > 500 or np.max(last_scores)==1e3
+    print_result(correct)

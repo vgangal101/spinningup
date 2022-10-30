@@ -25,17 +25,22 @@ def mlp(sizes, activation, output_activation=nn.Identity):
         (Use an nn.Sequential module.)
     """
 
-    # 
-
-    model = nn.Sequential()
-
+    layers = []
+    #inbetween_act = nn.Tanh()
+    #final_act = nn.Identity()
     for layer_num in range(len(sizes)):
-        if layer_num + 1 >= len(sizes):
-            model.add_module(output_activation)
-        else:
-            model.append(nn.Linear(sizes[layer_num],sizes[layer_num+1]))
-            model.append(activation)
+                
+        if layer_num == len(sizes) -1 : 
+            layers.append(nn.Identity())
+        elif layer_num == len(sizes) -2 : 
+            # second to last layer 
+            layers.append(nn.Linear(sizes[layer_num], sizes[layer_num+1]))
+        else: 
+            layers.append(nn.Linear(sizes[layer_num], sizes[layer_num+1]))
+            layers.append(nn.Tanh())    
 
+    model = nn.Sequential(*layers)
+    print(model)
     return model 
 
 class DiagonalGaussianDistribution:

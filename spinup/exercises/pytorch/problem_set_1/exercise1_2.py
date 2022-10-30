@@ -64,7 +64,14 @@ class DiagonalGaussianDistribution:
         #######################
         std = torch.exp(self.log_std)
 
-        z = torch.normal(self.mu,std)
+        # THIS COULD BE A SOURCE OF THE ISSUE 
+        #z = torch.normal(self.mu,std)
+        # IT IS THE SOURCE OF THE ISSUE!!! BUT WHY !!!
+
+        #z = torch.randn_like(self.mu)
+        mean = torch.tensor([0.])
+        variance = torch.tensor([1.])
+        z = torch.normal(mean,variance)
 
         sample_value = self.mu + std * z 
 
@@ -99,7 +106,8 @@ class MLPGaussianActor(nn.Module):
 
         sizes = [obs_dim,*hidden_sizes,act_dim]
         self.mu_net = mlp(sizes,activation) 
-        self.log_std = torch.tensor([-0.5] * act_dim)
+        self.log_std = nn.Parameter(torch.tensor([-0.5] * act_dim))
+
 
     #================================(Given, ignore)==========================================#
     def forward(self, obs, act=None):

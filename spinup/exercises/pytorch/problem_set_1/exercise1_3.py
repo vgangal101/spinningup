@@ -228,8 +228,8 @@ def td3(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
         eps_sigma = torch.tensor([target_noise])
         eps = torch.normal(eps_mean,eps_sigma)
 
-        action_low = torch.tensor([env.action_space.low])
-        action_high = torch.tensor([env.action_space.high])
+        action_low = torch.tensor(env.action_space.low)
+        action_high = torch.tensor(env.action_space.high)
 
         neg_c = torch.tensor([-1*noise_clip])
         c = torch.tensor([noise_clip])        
@@ -244,8 +244,8 @@ def td3(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
         #   YOUR CODE HERE    #
         #                     #
         #######################
-
-        target_q_val = r + gamma * (1-d) * torch.minimum(torch.flatten(ac_targ.q1(o2,target_actions)),torch.flatten(ac_targ.q2(o2,target_actions)))
+        with torch.no_grad():
+            target_q_val = r + gamma * (1-d) * torch.minimum(torch.flatten(ac_targ.q1(o2,target_actions)),torch.flatten(ac_targ.q2(o2,target_actions)))
 
 
         # MSE loss against Bellman backup
@@ -257,8 +257,9 @@ def td3(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
         
 
         loss_q1 = torch.nn.functional.mse_loss(q1,target_q_val) 
-        loss_q2 = torch.nn.functional(q2,target_q_val)
-        loss_q = loss_q1 if loss_q1 < loss_q2 else loss_q2
+        loss_q2 = torch.nn.functional.mse_loss(q2,target_q_val)
+        #loss_q = loss_q1 if loss_q1 < loss_q2 else loss_q2
+        loss_q = loss_q1 + loss_q2
 
         # Useful info for logging
         loss_info = dict(Q1Vals=q1.detach().numpy(),
@@ -279,7 +280,7 @@ def td3(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
 
         loss_pi = (torch.sum(ac.q1(o,ac.pi(o))))/batch_size
 
-        return loss_pi
+        return -loss_pi
 
     #=========================================================================#
     #                                                                         #

@@ -209,8 +209,8 @@ def td3(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
         #   YOUR CODE HERE    #
         #                     #
         #######################
-        # q1 = 
-        # q2 = 
+        q1 = torch.flatten(ac.q1(o,a)) 
+        q2 = torch.flatten(ac.q2(o,a))
 
         # Target policy smoothing
         #######################
@@ -219,6 +219,25 @@ def td3(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
         #                     #
         #######################
 
+        with torch.no_grad():
+            mean_target_vals = ac_targ.pi(o2)
+
+
+        # check value of mean_target_vals
+        eps_mean = torch.tensor([0.])
+        eps_sigma = torch.tensor([target_noise])
+        eps = torch.normal(eps_mean,eps_sigma)
+
+        action_low = torch.tensor([env.action_space.low])
+        action_high = torch.tensor([env.action_space.high])
+
+        neg_c = torch.tensor([-1*noise_clip])
+        c = torch.tensor([noise_clip])        
+        
+        with torch.no_grad():
+            target_actions = torch.clamp(mean_target_vals + torch.clamp(eps,neg_c,c),action_low,action_high)
+
+
         # Target Q-values
         #######################
         #                     #
@@ -226,20 +245,26 @@ def td3(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
         #                     #
         #######################
 
+        target_q_val = r + gamma * (1-d) * torch.minimum(torch.flatten(ac_targ.q1(o2,target_actions)),torch.flatten(ac_targ.q2(o2,target_actions)))
+
+
         # MSE loss against Bellman backup
         #######################
         #                     #
         #   YOUR CODE HERE    #
         #                     #
         #######################
-        # loss_q1 = 
-        # loss_q2 = 
-        # loss_q = 
+        
+
+        loss_q1 = torch.nn.functional.mse_loss(q1,target_q_val) 
+        loss_q2 = torch.nn.functional(q2,target_q_val)
+        loss_q = loss_q1 if loss_q1 < loss_q2 else loss_q2
 
         # Useful info for logging
         loss_info = dict(Q1Vals=q1.detach().numpy(),
                          Q2Vals=q2.detach().numpy())
 
+        
         return loss_q, loss_info
 
     # Set up function for computing TD3 pi loss
@@ -249,7 +274,11 @@ def td3(env_fn, actor_critic=core.MLPActorCritic, ac_kwargs=dict(), seed=0,
         #   YOUR CODE HERE    #
         #                     #
         #######################
-        # loss_pi = 
+        o, a, r, o2, d = data['obs'], data['act'], data['rew'], data['obs2'], data['done']
+        batch_size = o.shape[0]
+
+        loss_pi = (torch.sum(ac.q1(o,ac.pi(o))))/batch_size
+
         return loss_pi
 
     #=========================================================================#

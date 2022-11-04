@@ -151,15 +151,17 @@ def get_all_datasets(all_logdirs, legend=None, select=None, exclude=None):
     return data
 
 
-def make_plots(all_logdirs, legend=None, xaxis=None, values=None, count=False,  
+def make_plots(all_logdirs, legend=None, xaxis=None, values=None, count=False, graph_name_base='graph', 
                font_scale=1.5, smooth=1, select=None, exclude=None, estimator='mean'):
     data = get_all_datasets(all_logdirs, legend, select, exclude)
     values = values if isinstance(values, list) else [values]
     condition = 'Condition2' if count else 'Condition1'
     estimator = getattr(np, estimator)      # choose what to show on main curve: mean? max? min?
     for value in values:
+        filename = f'{graph_name_base}_{value}.png'
         plt.figure()
         plot_data(data, xaxis=xaxis, value=value, condition=condition, smooth=smooth, estimator=estimator)
+        plt.savefig(filename)
     plt.show()
 
 
@@ -174,6 +176,7 @@ def main():
     parser.add_argument('--smooth', '-s', type=int, default=1)
     parser.add_argument('--select', nargs='*')
     parser.add_argument('--exclude', nargs='*')
+    parser.add_argument('--graph_name',type=str)
     parser.add_argument('--est', default='mean')
     args = parser.parse_args()
     """
@@ -225,7 +228,7 @@ def main():
 
     """
 
-    make_plots(args.logdir, args.legend, args.xaxis, args.value, args.count, 
+    make_plots(args.logdir, args.legend, args.xaxis, args.value, args.count, args.graph_name,
                smooth=args.smooth, select=args.select, exclude=args.exclude,
                estimator=args.est)
 

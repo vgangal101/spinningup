@@ -30,9 +30,8 @@ class BuggedMLPActor(nn.Module):
         self.act_limit = act_limit
 
     def forward(self, obs):
-        # Return output from network scaled to action space limits.
         return self.act_limit * self.pi(obs)
-
+       
 class BuggedMLPQFunction(nn.Module):
 
     def __init__(self, obs_dim, act_dim, hidden_sizes, activation):
@@ -41,6 +40,7 @@ class BuggedMLPQFunction(nn.Module):
 
     def forward(self, obs, act):
         return self.q(torch.cat([obs, act], dim=-1))
+        # NEED TO SQUEEZE THIS VALUE THATS THE BUG 
 
 class BuggedMLPActorCritic(nn.Module):
 
